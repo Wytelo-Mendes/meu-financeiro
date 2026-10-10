@@ -217,12 +217,30 @@ document.getElementById('auth-signout').addEventListener('click',async()=>{await
 document.getElementById('admin-search').addEventListener('input',renderAdminUsers);
 document.getElementById('import-file').addEventListener('change',event=>importBackup(event.target.files[0]));
 document.getElementById('install-button').addEventListener('click',async()=>{
-  if(installPrompt){installPrompt.prompt();const result=await installPrompt.userChoice;if(result.outcome==='accepted')showToast('Aplicativo instalado.');installPrompt=null;}
-  else showToast('No navegador, use “Adicionar à tela inicial”.');
+  const help=document.getElementById('install-help');
+  const action=document.getElementById('install-action');
+  const dialog=document.getElementById('install-dialog');
+  const isInstalled=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isAndroid=/android/i.test(navigator.userAgent);
+  action.classList.toggle('hidden',!installPrompt);
+  if(isInstalled)help.textContent='O aplicativo já está instalado neste aparelho. Abra-o pelo ícone Meu Financeiro na tela inicial.';
+  else if(installPrompt)help.textContent='Adicione o aplicativo à tela inicial para abrir em uma janela própria. Toque em “Instalar aplicativo” e confirme a instalação.';
+  else if(isIOS)help.textContent='No iPhone ou iPad: abra este endereço no Safari, toque em Compartilhar (quadrado com seta para cima) e escolha “Adicionar à Tela de Início”.';
+  else if(isAndroid)help.textContent='No Android: abra este endereço no Chrome, toque no menu ⋮ e escolha “Instalar aplicativo” ou “Adicionar à tela inicial”. Se a opção não aparecer, atualize a página e tente novamente.';
+  else help.textContent='No menu do navegador, escolha “Instalar aplicativo” ou “Adicionar à tela inicial”. Para instalar no iPhone, use Safari; no Android, use Chrome.';
+  if(!dialog.open)dialog.showModal();
+});
+document.getElementById('install-action').addEventListener('click',async()=>{
+  if(!installPrompt)return;
+  const promptEvent=installPrompt;
+  installPrompt=null;
+  try{await promptEvent.prompt();const result=await promptEvent.userChoice;if(result.outcome==='accepted'){document.getElementById('install-dialog').close();showToast('Aplicativo instalado.');}}
+  catch(error){console.error('Falha ao abrir instalação PWA:',error);showToast('Não foi possível abrir a instalação. Use o menu do navegador.');}
 });
 window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();installPrompt=event;document.getElementById('install-button').classList.add('install-ready');});
-window.addEventListener('appinstalled',()=>{installPrompt=null;showToast('Aplicativo instalado.');});
-if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
+window.addEventListener('appinstalled',()=>{installPrompt=null;document.getElementById('install-dialog').close();showToast('Aplicativo instalado.');});
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./service-worker.js').catch(error=>console.error('Falha ao registrar o service worker:',error));
 document.getElementById('today-label').textContent=new Intl.DateTimeFormat('pt-BR',{weekday:'long',day:'2-digit',month:'long'}).format(today).toUpperCase();
 renderAll();
 if(cloud){cloud.auth.onAuthStateChange((event,session)=>{if(['SIGNED_IN','SIGNED_OUT','USER_UPDATED'].includes(event))setTimeout(()=>handleSession(session),0);});cloud.auth.getSession().then(({data})=>handleSession(data.session));}

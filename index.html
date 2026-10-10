@@ -31,7 +31,7 @@
         <section class="view active" id="view-inicio" aria-labelledby="page-title">
           <div class="welcome-row">
             <div><p class="eyebrow" id="today-label">SEU RESUMO</p><h1 id="page-title">Seu dinheiro,<br />em equilíbrio.</h1></div>
-            <button class="avatar" id="install-button" aria-label="Instalar aplicativo" title="Instalar no celular">MF</button>
+            <button class="avatar install-button" id="install-button" aria-label="Instalar aplicativo" title="Instalar no celular"><span aria-hidden="true">⇩</span> Instalar</button>
           </div>
           <div class="month-switcher">
             <button class="month-arrow" data-month-shift="-1" aria-label="Mês anterior">‹</button>
@@ -151,6 +151,12 @@
       <button class="primary-button" id="export-data">Baixar cópia de segurança</button>
       <label class="secondary-button import-label" for="import-file">Restaurar uma cópia</label><input class="hidden" id="import-file" type="file" accept="application/json,.json" />
       <button class="danger-button" id="clear-data">Apagar todos os dados</button>
+    </dialog>
+
+    <dialog id="install-dialog" class="sheet-dialog compact-dialog">
+      <div class="dialog-handle"></div><div class="dialog-heading"><div><p class="eyebrow">APLICATIVO NO CELULAR</p><h2>Instalar Meu Financeiro</h2></div><button class="close-button" data-close-dialog aria-label="Fechar">×</button></div>
+      <p id="install-help" class="backup-copy"></p>
+      <button id="install-action" class="primary-button submit-button hidden" type="button">Instalar aplicativo</button>
     </dialog>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
