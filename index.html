@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f6f7f4" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="description" content="Seu controle financeiro pessoal, simples e organizado." />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>Meu Financeiro</title>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#inicio" aria-label="Meu Financeiro, início">
+          <span class="brand-mark" aria-hidden="true">m</span>
+          <span>meu<span class="brand-light">financeiro</span></span>
+        </a>
+        <button class="icon-button" id="backup-button" aria-label="Opções de backup" title="Backup dos dados">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 17v3h14v-3"/></svg>
+        </button>
+        <button class="account-button" id="account-button" type="button">Entrar</button>
+      </header>
+
+      <main id="main-content">
+        <section class="view active" id="view-inicio" aria-labelledby="page-title">
+          <div class="welcome-row">
+            <div><p class="eyebrow" id="today-label">SEU RESUMO</p><h1 id="page-title">Seu dinheiro,<br />em equilíbrio.</h1></div>
+            <button class="avatar" id="install-button" aria-label="Instalar aplicativo" title="Instalar no celular">MF</button>
+          </div>
+          <div class="month-switcher">
+            <button class="month-arrow" data-month-shift="-1" aria-label="Mês anterior">‹</button>
+            <span id="month-label">Mês</span>
+            <button class="month-arrow" data-month-shift="1" aria-label="Próximo mês">›</button>
+          </div>
+
+          <article class="balance-card">
+            <div class="balance-top"><span>Saldo realizado no mês</span><span class="balance-dot"></span></div>
+            <strong id="balance-value">R$ 0,00</strong>
+            <div class="balance-foot"><span id="balance-caption">Entradas menos saídas pagas</span><span class="balance-arrow">↗</span></div>
+          </article>
+
+          <div class="summary-grid">
+            <article class="summary-card income-card"><div class="summary-icon">↙</div><span>Entradas realizadas</span><strong id="income-value">R$ 0,00</strong><small id="income-plan">Planejado R$ 0,00</small></article>
+            <article class="summary-card expense-card"><div class="summary-icon">↗</div><span>Saídas realizadas</span><strong id="expense-value">R$ 0,00</strong><small id="expense-plan">Planejado R$ 0,00</small></article>
+          </div>
+
+          <div class="section-heading"><div><p class="eyebrow">ACOMPANHAMENTO</p><h2>Por categoria</h2></div><button class="text-button" data-open-view="lancamentos">Ver tudo <span>→</span></button></div>
+          <div class="category-list" id="category-summary"></div>
+
+          <div class="section-heading recent-heading"><div><p class="eyebrow">MOVIMENTAÇÕES</p><h2>Recentes</h2></div><button class="text-button" data-open-view="lancamentos">Ver tudo <span>→</span></button></div>
+          <div class="transaction-list compact" id="recent-list"></div>
+          <div class="empty-state hidden" id="recent-empty"><div class="empty-art">✳</div><strong>Seu mês começa aqui</strong><span>Adicione sua primeira movimentação.</span><button class="primary-button" data-add-transaction>Adicionar lançamento</button></div>
+        </section>
+
+        <section class="view" id="view-lancamentos" aria-labelledby="transactions-title">
+          <div class="page-header"><div><p class="eyebrow">RECEITAS E DESPESAS</p><h1 id="transactions-title">Lançamentos</h1></div><button class="round-add" data-add-transaction aria-label="Adicionar lançamento">+</button></div>
+          <div class="month-switcher small"><button class="month-arrow" data-month-shift="-1" aria-label="Mês anterior">‹</button><span id="list-month-label">Mês</span><button class="month-arrow" data-month-shift="1" aria-label="Próximo mês">›</button></div>
+          <div class="filter-pills" role="group" aria-label="Filtrar lançamentos">
+            <button class="filter-pill active" data-filter="todos">Todos</button><button class="filter-pill" data-filter="receita">Entradas</button><button class="filter-pill" data-filter="despesa">Saídas</button><button class="filter-pill" data-filter="investimento">Investimentos</button>
+          </div>
+          <div class="list-totals"><div><span>Entradas realizadas</span><strong id="list-income">R$ 0,00</strong><small id="list-income-plan">Planejado R$ 0,00</small></div><div><span>Saídas realizadas</span><strong id="list-expense">R$ 0,00</strong><small id="list-expense-plan">Planejado R$ 0,00</small></div></div>
+          <div class="transaction-list" id="full-list"></div>
+          <div class="empty-state hidden" id="list-empty"><div class="empty-art">＋</div><strong>Nenhum lançamento neste mês</strong><span>Quando você registrar uma movimentação, ela aparecerá aqui.</span><button class="primary-button" data-add-transaction>Adicionar lançamento</button></div>
+        </section>
+
+        <section class="view" id="view-metas" aria-labelledby="goals-title">
+          <div class="page-header"><div><p class="eyebrow">ORGANIZE SEUS PLANOS</p><h1 id="goals-title">Planejamento</h1></div><button class="round-add" id="add-goal" aria-label="Adicionar meta de economia">+</button></div>
+          <p class="page-intro">Compare o planejado com o que já entrou e saiu.</p>
+          <div class="month-switcher small"><button class="month-arrow" data-month-shift="-1" aria-label="Mês anterior">‹</button><span id="budget-month-label">Mês</span><button class="month-arrow" data-month-shift="1" aria-label="Próximo mês">›</button></div>
+          <div class="section-heading"><div><p class="eyebrow">PLANO MENSAL</p><h2>Por categoria</h2></div></div>
+          <div class="budget-list" id="budget-list"></div>
+          <div class="empty-state hidden compact-empty" id="budget-empty"><div class="empty-art">▤</div><strong>Sem valores planejados para este mês</strong><span>Os valores de planejamento da planilha aparecerão aqui.</span></div>
+          <div class="section-heading card-plan-heading"><div><p class="eyebrow">CARTÕES</p><h2>Faturas planejadas</h2></div></div>
+          <div class="card-budget-list" id="card-budget-list"></div>
+          <div class="section-heading goals-section-heading"><div><p class="eyebrow">OBJETIVOS DE ECONOMIA</p><h2>Minhas metas</h2></div></div>
+          <div class="goal-list" id="goal-list"></div>
+          <div class="empty-state hidden compact-empty" id="goal-empty"><div class="empty-art">◇</div><strong>Qual é o seu próximo plano?</strong><span>Crie uma meta e acompanhe seu progresso.</span><button class="primary-button" data-add-goal>Nova meta</button></div>
+        </section>
+
+        <section class="view" id="view-investimentos" aria-labelledby="investments-title">
+          <div class="page-header"><div><p class="eyebrow">SEU PATRIMÔNIO</p><h1 id="investments-title">Investimentos</h1></div><button class="round-add" data-add-investment aria-label="Adicionar movimentação de investimento">+</button></div>
+          <p class="page-intro">Registre aportes e retiradas para acompanhar sua evolução.</p>
+          <article class="investment-card"><span>Total investido</span><strong id="invested-value">R$ 0,00</strong><small>Saldo calculado pelos aportes e retiradas registrados</small></article>
+          <div class="section-heading"><div><p class="eyebrow">CARTEIRA</p><h2>Movimentações</h2></div><button class="text-button" data-add-investment>Adicionar <span>＋</span></button></div>
+          <div class="transaction-list" id="investment-list"></div>
+          <div class="empty-state hidden" id="investment-empty"><div class="empty-art">↗</div><strong>Comece a acompanhar</strong><span>Registre seu primeiro aporte ou retirada.</span><button class="primary-button" data-add-investment>Registrar aporte</button></div>
+        </section>
+      </main>
+
+      <button class="floating-add" data-add-transaction aria-label="Novo lançamento"><span>+</span><span>Novo lançamento</span></button>
+      <nav class="bottom-nav" aria-label="Navegação principal">
+        <button class="nav-item active" data-nav="inicio"><span class="nav-icon">⌂</span><span>Início</span></button>
+        <button class="nav-item" data-nav="lancamentos"><span class="nav-icon">↕</span><span>Lançamentos</span></button>
+        <button class="nav-item" data-nav="metas"><span class="nav-icon">◇</span><span>Metas</span></button>
+        <button class="nav-item" data-nav="investimentos"><span class="nav-icon">↗</span><span>Investir</span></button>
+      </nav>
+    </div>
+
+    <dialog id="auth-dialog" class="sheet-dialog compact-dialog">
+      <form id="auth-form" method="dialog"><div class="dialog-handle"></div><div class="dialog-heading"><div><p class="eyebrow">SINCRONIZAÇÃO SEGURA</p><h2 id="auth-title">Acesse sua conta</h2></div></div>
+        <p class="backup-copy">Entre para salvar seus dados na nuvem e acessar de outros aparelhos.</p>
+        <label class="field-label" for="auth-email">E-mail</label><input class="text-input" id="auth-email" type="email" autocomplete="email" required />
+        <label class="field-label" for="auth-password">Senha</label><input class="text-input" id="auth-password" type="password" autocomplete="current-password" minlength="6" required />
+        <button class="primary-button submit-button" id="auth-submit" type="submit">Entrar</button>
+        <button class="secondary-button" id="auth-signup" type="button">Criar conta</button>
+        <button class="text-button" id="auth-signout" type="button">Sair da conta</button>
+      </form>
+    </dialog>
+
+    <dialog id="transaction-dialog" class="sheet-dialog">
+      <form id="transaction-form" method="dialog">
+        <div class="dialog-handle"></div><div class="dialog-heading"><div><p class="eyebrow">NOVA MOVIMENTAÇÃO</p><h2 id="transaction-dialog-title">Novo lançamento</h2></div><button type="button" class="close-button" data-close-dialog aria-label="Fechar">×</button></div>
+        <div class="type-switch" role="group" aria-label="Tipo de movimentação"><button type="button" class="type-option active" data-kind="despesa">Saída</button><button type="button" class="type-option" data-kind="receita">Entrada</button><button type="button" class="type-option" data-kind="investimento">Investimento</button></div>
+        <label class="field-label" for="tx-description">Descrição</label><input class="text-input" id="tx-description" maxlength="80" placeholder="Ex.: conta de luz" required />
+        <label class="field-label" for="tx-amount">Valor</label><div class="amount-input"><span>R$</span><input id="tx-amount" inputmode="decimal" type="number" min="0.01" step="0.01" placeholder="0,00" required /></div>
+        <div class="field-row"><div class="field-group"><label class="field-label" for="tx-category">Categoria</label><select class="text-input" id="tx-category"></select></div><div class="field-group"><label class="field-label" for="tx-date">Data prevista</label><input class="text-input" id="tx-date" type="date" required /></div></div>
+        <div class="field-row"><div class="field-group"><label class="field-label" for="tx-status">Situação</label><select class="text-input" id="tx-status"><option value="paid">Pago / recebido</option><option value="pending">Pendente</option></select></div><div class="field-group"><label class="field-label" for="tx-method">Forma</label><select class="text-input" id="tx-method"><option value="">Não informada</option><option>PIX</option><option>Débito</option><option>Crédito</option><option>Boleto</option><option>Dinheiro</option><option>Transferência</option><option>Depósito</option></select></div></div>
+        <div class="field-row"><div class="field-group"><label class="field-label" for="tx-card">Cartão <span class="optional">opcional</span></label><input class="text-input" id="tx-card" maxlength="40" placeholder="Nome do cartão" /></div><div class="field-group"><label class="field-label" for="tx-installment">Parcela <span class="optional">opcional</span></label><input class="text-input" id="tx-installment" maxlength="20" placeholder="Ex.: 2/6" /></div></div>
+        <label class="field-label" for="tx-note">Observação <span class="optional">opcional</span></label><input class="text-input" id="tx-note" maxlength="120" placeholder="Um detalhe para lembrar depois" />
+        <button class="primary-button submit-button" type="submit">Salvar lançamento</button>
+      </form>
+    </dialog>
+
+    <dialog id="goal-dialog" class="sheet-dialog">
+      <form id="goal-form" method="dialog"><div class="dialog-handle"></div><div class="dialog-heading"><div><p class="eyebrow">NOVO PLANO</p><h2>Criar meta</h2></div><button type="button" class="close-button" data-close-dialog aria-label="Fechar">×</button></div>
+        <label class="field-label" for="goal-name">Nome da meta</label><input class="text-input" id="goal-name" maxlength="50" placeholder="Ex.: viagem, reserva" required />
+        <label class="field-label" for="goal-target">Quanto você quer juntar?</label><div class="amount-input"><span>R$</span><input id="goal-target" inputmode="decimal" type="number" min="0.01" step="0.01" placeholder="0,00" required /></div>
+        <label class="field-label" for="goal-saved">Quanto já guardou?</label><div class="amount-input"><span>R$</span><input id="goal-saved" inputmode="decimal" type="number" min="0" step="0.01" value="0" /></div>
+        <button class="primary-button submit-button" type="submit">Salvar meta</button>
+      </form>
+    </dialog>
+
+    <dialog id="backup-dialog" class="sheet-dialog compact-dialog">
+      <div class="dialog-handle"></div><div class="dialog-heading"><div><p class="eyebrow">SEUS DADOS</p><h2>Backup e segurança</h2></div><button class="close-button" data-close-dialog aria-label="Fechar">×</button></div>
+      <p class="backup-copy">Seus dados ficam salvos neste aparelho. Faça uma cópia de segurança para poder recuperar suas informações depois.</p>
+      <button class="primary-button" id="export-data">Baixar cópia de segurança</button>
+      <label class="secondary-button import-label" for="import-file">Restaurar uma cópia</label><input class="hidden" id="import-file" type="file" accept="application/json,.json" />
+      <button class="danger-button" id="clear-data">Apagar todos os dados</button>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <input class="hidden" id="backup-file" type="file" accept="application/json" />
+    <script src="app.js" defer></script>
+  </body>
+</html>
