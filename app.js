@@ -5,7 +5,7 @@ const cloud = window.supabase?.createClient(SUPABASE_URL, SUPABASE_KEY);
 let currentUser = null, currentProfile = null, adminUsers = [], saveTimer = null, authMode = 'login';
 const MONTHS = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 const CATEGORIES = {
-  despesa: ['Moradia','Alimentação','Transporte','Saúde','Educação','Lazer','Contas','Compras','Outros'],
+  despesa: ['Moradia','Alimentação','Transporte','Saúde','Educação','Lazer','Compras','Outros'],
   receita: ['Salário','Renda extra','Benefícios','Vendas','Reembolso','Outros'],
   investimento: ['Aporte','Retirada']
 };
@@ -148,8 +148,11 @@ function showToast(message){const el=document.getElementById('toast');el.textCon
 function fillCategories(){
   const select=document.getElementById('tx-category');
   const extras=Array.isArray(state.categories[activeKind])?state.categories[activeKind]:[];
-  select.innerHTML=[...CATEGORIES[activeKind],...extras].map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('')+'<option value="__new">＋ Criar categoria</option>';
-  select.onchange=()=>{if(select.value==='__new'){const category=prompt('Nome da nova categoria:');if(category?.trim()){state.categories[activeKind]=[...(state.categories[activeKind]||[]),category.trim()];const wanted=category.trim();fillCategories();select.value=wanted;localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}else select.selectedIndex=0;}};
+  const isAdmin=currentProfile?.role==='admin';
+  const canManageCategories=isAdmin;
+  const options=isAdmin?[...CATEGORIES[activeKind],...extras]:CATEGORIES[activeKind];
+  select.innerHTML=options.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('')+(canManageCategories?'<option value="__new">＋ Criar categoria</option>':'');
+  select.onchange=()=>{if(canManageCategories&&select.value==='__new'){const category=prompt('Nome da nova categoria:');if(category?.trim()){state.categories[activeKind]=[...(state.categories[activeKind]||[]),category.trim()];const wanted=category.trim();fillCategories();select.value=wanted;localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}else select.selectedIndex=0;}};
 }
 function openTransaction(kind='despesa'){
   activeKind=kind;
