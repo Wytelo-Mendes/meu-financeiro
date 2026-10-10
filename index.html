@@ -91,6 +91,14 @@
           <div class="transaction-list" id="investment-list"></div>
           <div class="empty-state hidden" id="investment-empty"><div class="empty-art">↗</div><strong>Comece a acompanhar</strong><span>Registre seu primeiro aporte ou retirada.</span><button class="primary-button" data-add-investment>Registrar aporte</button></div>
         </section>
+
+        <section class="view" id="view-admin" aria-labelledby="admin-title">
+          <div class="page-header"><div><p class="eyebrow">ADMINISTRAÇÃO DO SAAS</p><h1 id="admin-title">Contas</h1></div><button class="text-button" id="admin-refresh" type="button">Atualizar ↻</button></div>
+          <p class="page-intro">Gerencie planos e acesso. Os dados financeiros dos usuários não são exibidos neste painel.</p>
+          <div class="admin-stats"><article><span>Contas</span><strong id="admin-total">0</strong></article><article><span>Ativas</span><strong id="admin-active">0</strong></article><article><span>Suspensas</span><strong id="admin-suspended">0</strong></article></div>
+          <label class="field-label" for="admin-search">Buscar conta</label><input class="text-input admin-search" id="admin-search" type="search" placeholder="E-mail ou nome" />
+          <div class="admin-user-list" id="admin-users"><p class="muted-note">Carregando contas…</p></div>
+        </section>
       </main>
 
       <button class="floating-add" data-add-transaction aria-label="Novo lançamento"><span>+</span><span>Novo lançamento</span></button>
@@ -99,6 +107,7 @@
         <button class="nav-item" data-nav="lancamentos"><span class="nav-icon">↕</span><span>Lançamentos</span></button>
         <button class="nav-item" data-nav="metas"><span class="nav-icon">◇</span><span>Metas</span></button>
         <button class="nav-item" data-nav="investimentos"><span class="nav-icon">↗</span><span>Investir</span></button>
+        <button class="nav-item hidden" data-nav="admin" id="admin-nav"><span class="nav-icon">⚙</span><span>Admin</span></button>
       </nav>
     </div>
 
@@ -109,7 +118,7 @@
         <label class="field-label" for="auth-password">Senha</label><input class="text-input" id="auth-password" type="password" autocomplete="current-password" minlength="6" required />
         <button class="primary-button submit-button" id="auth-submit" type="submit">Entrar</button>
         <button class="secondary-button" id="auth-signup" type="button">Criar conta</button>
-        <button class="text-button" id="auth-signout" type="button">Sair da conta</button>
+        <button class="text-button hidden" id="auth-signout" type="button">Sair da conta</button>
       </form>
     </dialog>
 
