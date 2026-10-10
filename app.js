@@ -148,9 +148,8 @@ function showToast(message){const el=document.getElementById('toast');el.textCon
 function fillCategories(){
   const select=document.getElementById('tx-category');
   const extras=Array.isArray(state.categories[activeKind])?state.categories[activeKind]:[];
-  const isAdmin=currentProfile?.role==='admin';
-  const canManageCategories=isAdmin;
-  const options=isAdmin?[...CATEGORIES[activeKind],...extras]:CATEGORIES[activeKind];
+  const canManageCategories=true;
+  const options=[...CATEGORIES[activeKind],...extras];
   select.innerHTML=options.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('')+(canManageCategories?'<option value="__new">＋ Criar categoria</option>':'');
   select.onchange=()=>{if(canManageCategories&&select.value==='__new'){const category=prompt('Nome da nova categoria:');if(category?.trim()){state.categories[activeKind]=[...(state.categories[activeKind]||[]),category.trim()];const wanted=category.trim();fillCategories();select.value=wanted;localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}else select.selectedIndex=0;}};
 }
