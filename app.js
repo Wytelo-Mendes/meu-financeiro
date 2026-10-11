@@ -17,6 +17,7 @@ let monthCursor = newestTransaction?.date ? new Date(dateObj(newestTransaction.d
 let activeView = 'inicio';
 let activeKind = 'despesa';
 let activeFilter = 'todos';
+let reportFilter = 'todos';
 let installPrompt = null;
 let toastTimer;
 
@@ -63,7 +64,7 @@ function monthTransactions(){ return state.transactions.filter(t=>sameMonth(t.da
 function sorted(items){ return [...items].sort((a,b)=>String(b.date).localeCompare(String(a.date)) || b.createdAt-a.createdAt); }
 function escapeHtml(value){ return String(value??'').replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
 function monthText(date=monthCursor){ return `${MONTHS[date.getMonth()]} ${date.getFullYear()}`; }
-function setMonthLabels(){ document.querySelectorAll('#month-label,#list-month-label,#budget-month-label').forEach(el=>el.textContent=monthText()); }
+function setMonthLabels(){ document.querySelectorAll('#month-label,#list-month-label,#budget-month-label,#report-month-label').forEach(el=>el.textContent=monthText()); }
 function sums(items){ return items.reduce((a,t)=>{if(t.kind==='receita')a.income+=t.amount;else if(t.kind==='despesa')a.expense+=t.amount;return a;},{income:0,expense:0}); }
 function transactionIcon(t){ return ICONS[t.category] || (t.kind==='receita'?'↙':t.kind==='investimento'?'↗':'•'); }
 function signedClass(t){return t.kind==='receita'?'income':t.kind==='investimento'?'investment':'expense';}
@@ -136,7 +137,63 @@ function renderInvestments(){
   document.getElementById('investment-list').innerHTML=recent.map(t=>txMarkup(t)).join('');
   document.getElementById('investment-empty').classList.toggle('hidden',recent.length>0);
 }
-function renderAll(){setMonthLabels();renderDashboard();renderTransactions();renderGoals();renderBudgets();renderInvestments();}
+function reportTotals(kind){
+  const monthIndex=monthCursor.getMonth();
+  const plans=state.budgets.filter(b=>b.kind===kind&&Array.isArray(b.monthly));
+  const actuals=monthTransactions().filter(t=>t.kind===kind&&t.paid!==false);
+  const planned=plans.reduce((sum,b)=>sum+(Number(b.monthly[monthIndex])||0),0);
+  const actual=actuals.reduce((sum,t)=>sum+(Number(t.amount)||0),0);
+  const categoryNames=new Set([...plans.map(b=>b.category),...monthTransactions().filter(t=>t.kind===kind).map(t=>t.category)]);
+  const categories=[...categoryNames].filter(Boolean).map(name=>{
+    const categoryPlan=plans.filter(b=>b.category===name).reduce((sum,b)=>sum+(Number(b.monthly[monthIndex])||0),0);
+    const categoryActual=actuals.filter(t=>t.category===name).reduce((sum,t)=>sum+(Number(t.amount)||0),0);
+    return {name,planned:categoryPlan,actual:categoryActual,pct:categoryPlan?Math.round(categoryActual/categoryPlan*100):null};
+  }).sort((a,b)=>b.actual-a.actual||b.planned-a.planned||a.name.localeCompare(b.name,'pt-BR'));
+  return {planned,actual,categories};
+}
+function reportSummaryMarkup(kind,title,icon){
+  const data=reportTotals(kind),pct=data.planned?Math.round(data.actual/data.planned*100):0;
+  const fill=Math.min(100,pct),over=data.planned>0&&data.actual>data.planned;
+  const className=kind==='receita'?'income':'expense';
+  const ratio=data.planned?`${pct}%`:'—';
+  const caption=data.planned?`${pct}% do plano`: 'Sem planejamento';
+  return `<article class="report-summary-card ${className}"><div class="report-summary-main"><div class="report-summary-copy"><span class="report-kind-icon">${icon}</span><div><p>${title}</p><strong>${money(data.actual)}</strong></div></div><div class="report-ring" style="--ring-fill:${fill*3.6}deg" role="img" aria-label="${title}: ${caption}"><span>${ratio}</span></div></div><div class="report-summary-bottom"><span>Planejado ${money(data.planned)}</span><span class="report-delta ${over?'over':''}">${data.planned?`${over?'Acima':'Saldo'} ${money(Math.abs(data.planned-data.actual))}`:'Sem plano'}</span></div><div class="report-progress" role="progressbar" aria-label="${title}: ${caption}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.min(100,pct)}"><span style="width:${fill}%"></span></div><small>${caption}</small></article>`;
+}
+function renderReports(){
+  const kinds=reportFilter==='todos'?['receita','despesa']:[reportFilter];
+  document.querySelectorAll('[data-report-filter]').forEach(button=>button.classList.toggle('active',button.dataset.reportFilter===reportFilter));
+  document.getElementById('report-overview').innerHTML=kinds.map(kind=>reportSummaryMarkup(kind,kind==='receita'?'Recebimentos':'Despesas',kind==='receita'?'↙':'↗')).join('');
+  const categoryRoot=document.getElementById('report-categories');
+  categoryRoot.innerHTML=kinds.map(kind=>{
+    const data=reportTotals(kind);
+    const title=kind==='receita'?'Recebimentos':'Despesas';
+    if(!data.categories.length)return `<section class="report-category-section"><div class="section-heading"><div><p class="eyebrow">${kind==='receita'?'ENTRADAS':'SAÍDAS'}</p><h2>${title} por categoria</h2></div></div><p class="muted-note report-note">Ainda não há lançamentos nem valores planejados neste período.</p></section>`;
+    const rows=data.categories.map(category=>{
+      const pct=category.pct===null?0:Math.min(100,category.pct);
+      const pctLabel=category.pct===null?'Sem plano':`${category.pct}%`;
+      const remaining=category.pct===null?'Sem planejamento':category.actual>category.planned?`Acima ${money(category.actual-category.planned)}`:`Restam ${money(category.planned-category.actual)}`;
+      return `<article class="report-category-card ${kind}"><div class="report-category-top"><span class="category-icon">${escapeHtml(ICONS[category.name]||'•')}</span><strong>${escapeHtml(category.name)}</strong><b>${pctLabel}</b></div><div class="report-category-values"><span>Planejou <strong>${money(category.planned)}</strong></span><span>${kind==='receita'?'Recebeu':'Gastou'} <strong>${money(category.actual)}</strong></span></div><div class="report-progress" role="progressbar" aria-label="${escapeHtml(category.name)}: ${pctLabel}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><span style="width:${pct}%"></span></div><small>${remaining}</small></article>`;
+    }).join('');
+    return `<section class="report-category-section"><div class="section-heading"><div><p class="eyebrow">${kind==='receita'?'ENTRADAS':'SAÍDAS'}</p><h2>${title} por categoria</h2></div></div><div class="report-category-list">${rows}</div></section>`;
+  }).join('');
+  const items=sorted(monthTransactions().filter(t=>kinds.includes(t.kind)));
+  document.getElementById('report-transactions').innerHTML=items.map(t=>txMarkup(t,false)).join('');
+  document.getElementById('report-empty').classList.toggle('hidden',items.length>0);
+}
+function exportReportCsv(){
+  const kinds=reportFilter==='todos'?['receita','despesa']:[reportFilter];
+  const quote=value=>`"${String(value??'').replace(/"/g,'""')}"`;
+  const rows=[['Mês','Tipo','Categoria','Planejado (R$)','Realizado (R$)','Percentual']];
+  for(const kind of kinds){
+    const data=reportTotals(kind);
+    for(const category of data.categories)rows.push([monthText(),kind==='receita'?'Receita':'Despesa',category.name,(category.planned||0).toFixed(2).replace('.',','),(category.actual||0).toFixed(2).replace('.',','),category.pct===null?'Sem plano':`${category.pct}%`]);
+  }
+  if(rows.length===1){showToast('Não há dados de receitas ou despesas para exportar.');return;}
+  const csv='\uFEFF'+rows.map(row=>row.map(quote).join(';')).join('\r\n');
+  const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  const link=document.createElement('a');link.href=url;link.download=`relatorio-${monthCursor.getFullYear()}-${String(monthCursor.getMonth()+1).padStart(2,'0')}.csv`;link.click();URL.revokeObjectURL(url);
+}
+function renderAll(){setMonthLabels();renderDashboard();renderTransactions();renderGoals();renderBudgets();renderInvestments();renderReports();}
 function switchView(view){
   activeView=view;
   document.querySelectorAll('.view').forEach(el=>el.classList.toggle('active',el.id===`view-${view}`));
@@ -192,6 +249,8 @@ function importBackup(file){
 document.addEventListener('click',event=>{
   const nav=event.target.closest('[data-nav]');if(nav){if(nav.dataset.nav==='admin'&&currentProfile?.role!=='admin'){showToast('Acesso restrito ao administrador.');return;}switchView(nav.dataset.nav);return;}
   const open=event.target.closest('[data-open-view]');if(open){switchView(open.dataset.openView);return;}
+  const reportTab=event.target.closest('[data-report-filter]');if(reportTab){reportFilter=reportTab.dataset.reportFilter;renderReports();return;}
+  if(event.target.closest('#report-export')){exportReportCsv();return;}
   const shift=event.target.closest('[data-month-shift]');if(shift){monthCursor.setMonth(monthCursor.getMonth()+Number(shift.dataset.monthShift));renderAll();return;}
   const addTx=event.target.closest('[data-add-transaction]');if(addTx){openTransaction('despesa');return;}
   const addInv=event.target.closest('[data-add-investment]');if(addInv){openTransaction('investimento');return;}

@@ -92,6 +92,18 @@
           <div class="empty-state hidden" id="investment-empty"><div class="empty-art">↗</div><strong>Comece a acompanhar</strong><span>Registre seu primeiro aporte ou retirada.</span><button class="primary-button" data-add-investment>Registrar aporte</button></div>
         </section>
 
+        <section class="view" id="view-relatorios" aria-labelledby="reports-title">
+          <div class="page-header"><div><p class="eyebrow">VISÃO CLARA DO SEU DINHEIRO</p><h1 id="reports-title">Relatórios</h1></div><button class="text-button" id="report-export" type="button">Exportar CSV ↓</button></div>
+          <p class="page-intro">Compare o que planejou com o que recebeu e gastou.</p>
+          <div class="month-switcher small"><button class="month-arrow" data-month-shift="-1" aria-label="Mês anterior">‹</button><span id="report-month-label">Mês</span><button class="month-arrow" data-month-shift="1" aria-label="Próximo mês">›</button></div>
+          <div class="report-filter filter-pills" role="group" aria-label="Filtrar relatório"><button class="filter-pill active" data-report-filter="todos">Tudo</button><button class="filter-pill" data-report-filter="receita">Receitas</button><button class="filter-pill" data-report-filter="despesa">Despesas</button></div>
+          <div class="report-overview" id="report-overview"></div>
+          <div id="report-categories"></div>
+          <div class="section-heading report-detail-heading"><div><p class="eyebrow">MOVIMENTAÇÕES DO PERÍODO</p><h2>Detalhamento</h2></div></div>
+          <div class="transaction-list" id="report-transactions"></div>
+          <div class="empty-state hidden compact-empty" id="report-empty"><div class="empty-art">▤</div><strong>Nenhuma movimentação neste mês</strong><span>Quando você registrar lançamentos, eles aparecerão no relatório.</span></div>
+        </section>
+
         <section class="view" id="view-admin" aria-labelledby="admin-title">
           <div class="page-header"><div><p class="eyebrow">ADMINISTRAÇÃO DO SAAS</p><h1 id="admin-title">Contas</h1></div><button class="text-button" id="admin-refresh" type="button">Atualizar ↻</button></div>
           <p class="page-intro">Gerencie planos e acesso. Os dados financeiros dos usuários não são exibidos neste painel.</p>
@@ -107,6 +119,7 @@
         <button class="nav-item" data-nav="lancamentos"><span class="nav-icon">↕</span><span>Lançamentos</span></button>
         <button class="nav-item" data-nav="metas"><span class="nav-icon">◇</span><span>Metas</span></button>
         <button class="nav-item" data-nav="investimentos"><span class="nav-icon">↗</span><span>Investir</span></button>
+        <button class="nav-item" data-nav="relatorios"><span class="nav-icon">▤</span><span>Relatórios</span></button>
         <button class="nav-item hidden" data-nav="admin" id="admin-nav"><span class="nav-icon">⚙</span><span>Admin</span></button>
       </nav>
     </div>

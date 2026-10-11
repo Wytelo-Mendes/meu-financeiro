@@ -11,3 +11,40 @@
 #auth-dialog .text-button{align-self:center;padding:10px}
 .bottom-nav.admin-mode{grid-template-columns:repeat(5,minmax(0,1fr))}.admin-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:15px 0}.admin-stats article{display:flex;flex-direction:column;gap:5px;padding:12px;border:1px solid var(--line);border-radius:14px;background:#fff}.admin-stats span{font-size:10px;color:var(--muted)}.admin-stats strong{font:700 20px Manrope,sans-serif;color:var(--green)}.admin-search{margin-bottom:12px}.admin-user-list{display:grid;gap:10px}.admin-user-card{padding:14px;border:1px solid var(--line);border-radius:17px;background:#fff}.admin-user-heading{display:flex;align-items:center;gap:9px}.admin-user-avatar{display:grid;place-items:center;flex:0 0 34px;height:34px;border-radius:12px;background:#e7f0e9;color:var(--green);font-weight:700}.admin-user-identity{min-width:0;flex:1;display:flex;flex-direction:column;gap:3px}.admin-user-identity strong{font-size:11px}.admin-user-identity span{font-size:9px;color:var(--muted);overflow-wrap:anywhere}.admin-role{font-size:8px;font-weight:800;letter-spacing:.4px;border-radius:20px;padding:5px 7px;background:#edf1ed;color:#68776d}.admin-role-owner{background:#e6efe9;color:var(--green)}.admin-user-meta{display:flex;justify-content:space-between;align-items:center;margin:12px 0 8px;color:var(--muted);font-size:9px}.admin-status{padding:4px 7px;border-radius:20px;font-weight:700;background:#e6f2e9;color:#286344}.status-suspended,.status-canceled,.status-past_due{background:#faece8;color:#a75143}.status-trial{background:#fff3de;color:#946625}.admin-controls{display:grid;grid-template-columns:1fr 1fr;gap:8px}.admin-controls label{font-size:9px;font-weight:700;color:var(--muted)}.admin-controls .text-input{display:block;margin-top:5px;min-height:38px;font-size:10px}.admin-save{margin-top:9px;padding:10px}.admin-lock-note{margin:10px 0 0;text-align:center;color:var(--muted);font-size:9px}
 .install-button{width:auto;min-width:82px;height:40px;padding:0 11px;display:flex;align-items:center;justify-content:center;gap:5px;border-radius:13px 13px 13px 4px;font-size:11px}
+.bottom-nav.admin-mode{grid-template-columns:repeat(6,minmax(0,1fr))}
+.report-filter{margin:2px 0 14px}
+.report-overview{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 24px}
+.report-summary-card{min-width:0;padding:13px;border:1px solid var(--line);border-radius:17px;background:#fff;box-shadow:0 3px 12px #28352e07}
+.report-summary-main{display:flex;align-items:center;justify-content:space-between;gap:5px}
+.report-summary-copy{min-width:0;display:flex;align-items:center;gap:8px}
+.report-kind-icon{flex:0 0 27px;height:27px;display:grid;place-items:center;border-radius:9px;background:#e7f1ea;color:var(--green);font-size:15px;font-weight:700}
+.report-summary-card.expense .report-kind-icon{background:#faece8;color:var(--coral)}
+.report-summary-copy p{margin:0 0 4px;color:var(--muted);font-size:9px}
+.report-summary-copy strong{display:block;overflow-wrap:anywhere;color:var(--ink);font:700 14px/1.2 Manrope,sans-serif;letter-spacing:-.3px}
+.report-ring{flex:0 0 54px;width:54px;height:54px;display:grid;place-items:center;border-radius:50%;background:conic-gradient(var(--report-color,var(--green)) var(--ring-fill),#e9eeea 0);position:relative}
+.report-ring:before{content:"";position:absolute;inset:6px;border-radius:50%;background:white}
+.report-ring span{position:relative;color:var(--ink);font:700 10px Manrope,sans-serif}
+.report-summary-card.expense{--report-color:var(--coral)}
+.report-summary-card.income{--report-color:var(--green)}
+.report-summary-bottom{display:flex;justify-content:space-between;gap:4px;margin:12px 0 8px;color:var(--muted);font-size:8px}
+.report-delta{color:var(--green);font-weight:700;text-align:right}
+.report-delta.over{color:var(--coral)}
+.report-progress{height:5px;overflow:hidden;border-radius:8px;background:#edf0ec}
+.report-progress span{display:block;height:100%;border-radius:inherit;background:var(--green);transition:width .2s ease}
+.report-summary-card.expense .report-progress span,.report-category-card.despesa .report-progress span{background:var(--coral)}
+.report-summary-card small,.report-category-card small{display:block;margin-top:6px;color:var(--muted);font-size:8px}
+.report-category-section{margin:0 0 24px}
+.report-category-section .section-heading{margin-bottom:10px}
+.report-category-list{display:grid;gap:8px}
+.report-category-card{padding:12px 13px;border:1px solid var(--line);border-radius:15px;background:#fff}
+.report-category-top{display:flex;align-items:center;gap:8px}
+.report-category-top .category-icon{width:28px;height:28px;flex:0 0 28px}
+.report-category-top>strong{min-width:0;flex:1;overflow-wrap:anywhere;font-size:11px}
+.report-category-top>b{flex:0 0 auto;color:var(--green);font-size:10px}
+.report-category-card.despesa .report-category-top>b{color:var(--coral)}
+.report-category-values{display:flex;justify-content:space-between;gap:7px;margin:10px 0 7px;color:var(--muted);font-size:9px}
+.report-category-values>span{min-width:0}
+.report-category-values strong{display:block;margin-top:3px;color:var(--ink);font-size:10px}
+.report-detail-heading{margin-top:25px}
+.report-note{padding:13px;border:1px dashed var(--line);border-radius:13px}
+@media(max-width:360px){.report-overview{grid-template-columns:1fr}.report-summary-card{padding:14px}.report-summary-copy strong{font-size:16px}}
