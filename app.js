@@ -143,14 +143,17 @@ function reportTotals(kind){
   const monthIndex=monthCursor.getMonth();
   const plans=state.budgets.filter(b=>b.kind===kind&&Array.isArray(b.monthly));
   const actuals=monthTransactions().filter(t=>t.kind===kind&&t.paid!==false);
-  const planned=plans.reduce((sum,b)=>sum+(Number(b.monthly[monthIndex])||0),0);
+  const pending=monthTransactions().filter(t=>t.kind===kind&&t.paid===false);
   const actual=actuals.reduce((sum,t)=>sum+(Number(t.amount)||0),0);
   const categoryNames=new Set([...plans.map(b=>b.category),...monthTransactions().filter(t=>t.kind===kind).map(t=>t.category)]);
   const categories=[...categoryNames].filter(Boolean).map(name=>{
-    const categoryPlan=plans.filter(b=>b.category===name).reduce((sum,b)=>sum+(Number(b.monthly[monthIndex])||0),0);
+    const categoryBudget=plans.filter(b=>b.category===name).reduce((sum,b)=>sum+(Number(b.monthly[monthIndex])||0),0);
+    const pendingAmount=pending.filter(t=>t.category===name).reduce((sum,t)=>sum+(Number(t.amount)||0),0);
+    const categoryPlan=categoryBudget||pendingAmount;
     const categoryActual=actuals.filter(t=>t.category===name).reduce((sum,t)=>sum+(Number(t.amount)||0),0);
     return {name,planned:categoryPlan,actual:categoryActual,pct:categoryPlan?Math.round(categoryActual/categoryPlan*100):null};
   }).sort((a,b)=>b.actual-a.actual||b.planned-a.planned||a.name.localeCompare(b.name,'pt-BR'));
+  const planned=categories.reduce((sum,category)=>sum+category.planned,0);
   return {planned,actual,categories};
 }
 function reportSummaryMarkup(kind,title,icon){
