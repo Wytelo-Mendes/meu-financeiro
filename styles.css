@@ -105,3 +105,51 @@ main{width:min(100%,1480px);margin:0 auto;padding:34px clamp(26px,4vw,64px) 60px
 .floating-add{left:auto;right:34px;bottom:30px;transform:none;padding:13px 19px;font-size:12px;box-shadow:0 8px 22px #1b563d2c}
 .sheet-dialog#auth-dialog{width:min(480px,calc(100vw - 48px))}}
 @media(min-width:1440px){main{padding-left:70px;padding-right:70px}.summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.report-export-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.print-report-header{display:none}
+@media print{
+  @page{size:A4 portrait;margin:14mm 13mm}
+  html,body{width:auto!important;min-height:0!important;background:#fff!important;color:#18231d!important;font-family:Arial,Helvetica,sans-serif!important;font-size:10pt!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body *{visibility:hidden!important}
+  #view-relatorios,#view-relatorios *{visibility:visible!important}
+  #view-relatorios{position:absolute!important;inset:0!important;display:block!important;width:100%!important;margin:0!important;padding:0!important;background:#fff!important;color:#18231d!important}
+  .app-shell,main{display:block!important;width:100%!important;max-width:none!important;min-height:0!important;margin:0!important;padding:0!important;overflow:visible!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:#fff!important}
+  #view-relatorios .page-header{display:block!important;margin:0 0 12pt!important;padding:0 0 9pt!important;border-bottom:1.5pt solid #24634a}
+  #view-relatorios .page-header h1{margin:0!important;color:#18231d!important;font-size:24pt!important}
+  #view-relatorios .page-header .eyebrow,#view-relatorios .page-intro,.report-export-actions,.month-switcher,.report-filter,.floating-add,.bottom-nav,.topbar,.report-detail-heading button{display:none!important}
+  .print-report-header{display:block!important;margin:0 0 18pt!important;padding:0 0 13pt!important;border-bottom:1pt solid #dce5de}
+  .print-report-brand{display:flex!important;align-items:center;gap:8pt;color:#24634a;font-size:12pt}
+  .print-brand-mark{display:grid;place-items:center;width:24pt;height:24pt;border-radius:7pt;background:#e8f2eb;color:#24634a;font-size:15pt;font-weight:700}
+  .print-report-header>p{margin:17pt 0 4pt!important;color:#64736a;font-size:8pt;font-weight:700;letter-spacing:1.2pt}
+  .print-report-header h2{margin:0 0 4pt!important;color:#18231d!important;font-size:18pt!important}
+  .print-report-header small{color:#68766e;font-size:8pt}
+  #view-relatorios .section-heading{margin:12pt 0 7pt!important;break-after:avoid-page;page-break-after:avoid}
+  #view-relatorios .section-heading .eyebrow{color:#64736a!important;font-size:7pt!important;letter-spacing:.8pt}
+  #view-relatorios .section-heading h2{margin:0!important;color:#18231d!important;font-size:13pt!important}
+  .report-overview{grid-template-columns:1fr 1fr!important;gap:9pt!important;margin:0 0 15pt!important}
+  .report-summary-card,.report-category-card,.transaction-row{break-inside:avoid!important;page-break-inside:avoid!important;border:1pt solid #dce5de!important;border-radius:7pt!important;background:#fff!important;box-shadow:none!important}
+  .report-summary-card{padding:10pt!important}
+  .report-summary-copy p,.report-summary-bottom,.report-category-values,.report-summary-card small,.report-category-card small{color:#536158!important;font-size:8pt!important}
+  .report-summary-copy strong{color:#18231d!important;font-size:14pt!important}
+  .report-ring{width:42pt!important;height:42pt!important;flex-basis:42pt!important}
+  .report-ring:before{background:#fff!important}
+  .report-ring span{font-size:8pt!important}
+  .report-category-section{margin:0 0 14pt!important}
+  .report-category-list{grid-template-columns:1fr 1fr!important;gap:7pt!important}
+  .report-category-card{padding:8pt!important}
+  .report-category-top>strong{color:#18231d!important;font-size:9pt!important}
+  .report-category-top>b{font-size:8pt!important}
+  .report-category-values{margin:6pt 0 4pt!important}
+  .report-progress{background:#e9eeea!important}
+  .report-progress span{background:#24634a!important}
+  .report-category-card.despesa .report-progress span{background:#bd6548!important}
+  .report-transactions,.transaction-list#report-transactions{display:grid!important;grid-template-columns:1fr!important;gap:5pt!important}
+  #report-transactions .transaction-row{min-height:0!important;padding:8pt 10pt!important}
+  #report-transactions .transaction-title{color:#18231d!important;font-size:9pt!important}
+  #report-transactions .transaction-meta{color:#68766e!important;font-size:7pt!important}
+  #report-transactions .transaction-amount{color:#18231d!important;font-size:9pt!important}
+  #report-transactions .transaction-actions,#report-transactions button,#report-transactions .row-pay,#report-transactions .row-delete{display:none!important}
+  #view-relatorios .empty-state.hidden{display:none!important}
+  #view-relatorios .muted-note{color:#536158!important}
+  a{color:inherit!important;text-decoration:none!important}
+}

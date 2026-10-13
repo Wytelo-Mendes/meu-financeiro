@@ -195,6 +195,14 @@ function exportReportCsv(){
   const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
   const link=document.createElement('a');link.href=url;link.download=`relatorio-${monthCursor.getFullYear()}-${String(monthCursor.getMonth()+1).padStart(2,'0')}.csv`;link.click();URL.revokeObjectURL(url);
 }
+function exportReportPdf(){
+  document.getElementById('print-report-month').textContent=monthText();
+  document.getElementById('print-report-date').textContent=new Intl.DateTimeFormat('pt-BR',{dateStyle:'long'}).format(new Date());
+  const previousTitle=document.title;
+  document.title=`Relatório financeiro - ${monthText()}`;
+  window.addEventListener('afterprint',()=>{document.title=previousTitle;},{once:true});
+  window.print();
+}
 function renderAll(){setMonthLabels();renderDashboard();renderTransactions();renderGoals();renderBudgets();renderInvestments();renderReports();}
 function switchView(view){
   activeView=view;
@@ -252,6 +260,7 @@ document.addEventListener('click',event=>{
   const nav=event.target.closest('[data-nav]');if(nav){if(nav.dataset.nav==='admin'&&currentProfile?.role!=='admin'){showToast('Acesso restrito ao administrador.');return;}switchView(nav.dataset.nav);return;}
   const open=event.target.closest('[data-open-view]');if(open){switchView(open.dataset.openView);return;}
   const reportTab=event.target.closest('[data-report-filter]');if(reportTab){reportFilter=reportTab.dataset.reportFilter;renderReports();return;}
+  if(event.target.closest('#report-pdf')){exportReportPdf();return;}
   if(event.target.closest('#report-export')){exportReportCsv();return;}
   const shift=event.target.closest('[data-month-shift]');if(shift){monthCursor.setMonth(monthCursor.getMonth()+Number(shift.dataset.monthShift));renderAll();return;}
   const addTx=event.target.closest('[data-add-transaction]');if(addTx){openTransaction('despesa');return;}

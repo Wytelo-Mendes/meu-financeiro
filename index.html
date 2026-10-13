@@ -93,8 +93,9 @@
         </section>
 
         <section class="view" id="view-relatorios" aria-labelledby="reports-title">
-          <div class="page-header"><div><p class="eyebrow">VISÃO CLARA DO SEU DINHEIRO</p><h1 id="reports-title">Relatórios</h1></div><button class="text-button" id="report-export" type="button">Exportar CSV ↓</button></div>
+          <div class="page-header"><div><p class="eyebrow">VISÃO CLARA DO SEU DINHEIRO</p><h1 id="reports-title">Relatórios</h1></div><div class="report-export-actions"><button class="text-button" id="report-pdf" type="button">Salvar PDF ↓</button><button class="text-button" id="report-export" type="button">Exportar CSV ↓</button></div></div>
           <p class="page-intro">Compare o que planejou com o que recebeu e gastou.</p>
+          <header class="print-report-header"><div class="print-report-brand"><span class="print-brand-mark">m</span><strong>meu financeiro</strong></div><p>RELATÓRIO FINANCEIRO</p><h2>Resumo mensal · <span id="print-report-month"></span></h2><small>Gerado em <span id="print-report-date"></span></small></header>
           <div class="month-switcher small"><button class="month-arrow" data-month-shift="-1" aria-label="Mês anterior">‹</button><span id="report-month-label">Mês</span><button class="month-arrow" data-month-shift="1" aria-label="Próximo mês">›</button></div>
           <div class="report-filter filter-pills" role="group" aria-label="Filtrar relatório"><button class="filter-pill active" data-report-filter="todos">Tudo</button><button class="filter-pill" data-report-filter="receita">Receitas</button><button class="filter-pill" data-report-filter="despesa">Despesas</button></div>
           <div class="report-overview" id="report-overview"></div>
