@@ -11,7 +11,7 @@ const CATEGORIES = {
 };
 const ICONS = {Moradia:'⌂',Alimentação:'◌',Transporte:'↗',Saúde:'＋',Educação:'▤',Lazer:'✳',Contas:'▣',Compras:'◇',Outros:'•',Salário:'↙','Renda extra':'✳',Benefícios:'◇',Vendas:'↗',Reembolso:'↩',Aporte:'↘',Retirada:'↗'};
 const today = new Date();
-let state = readState();
+let state = emptyState();
 const newestTransaction = [...state.transactions].sort((a,b)=>String(b.date).localeCompare(String(a.date)))[0];
 let monthCursor = newestTransaction?.date ? new Date(dateObj(newestTransaction.date).getFullYear(),dateObj(newestTransaction.date).getMonth(),1) : new Date(today.getFullYear(), today.getMonth(), 1);
 let activeView = 'inicio';
@@ -21,13 +21,15 @@ let reportFilter = 'todos';
 let installPrompt = null;
 let toastTimer;
 
-function readState(){
+function emptyState(){return {transactions:[],goals:[],categories:{},budgets:[],cards:[]};}
+function accountStorageKey(user=currentUser){return user?`${STORAGE_KEY}:${user.id}`:STORAGE_KEY;}
+function readState(key=accountStorageKey()){
   try {
-    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    const parsed = JSON.parse(localStorage.getItem(key) || '{}');
     return {transactions:Array.isArray(parsed.transactions)?parsed.transactions.map(t=>({...t,paid:typeof t.paid==='boolean'?t.paid:true})):[], goals:Array.isArray(parsed.goals)?parsed.goals:[], categories:parsed.categories&&typeof parsed.categories==='object'?parsed.categories:{}, budgets:Array.isArray(parsed.budgets)?parsed.budgets:[], cards:Array.isArray(parsed.cards)?parsed.cards:[]};
   } catch { return {transactions:[], goals:[], categories:{}, budgets:[], cards:[]}; }
 }
-function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); renderAll(); if(currentUser){clearTimeout(saveTimer);saveTimer=setTimeout(()=>syncState().catch(showCloudError),500);} }
+function saveState(){ localStorage.setItem(accountStorageKey(), JSON.stringify(state)); renderAll(); if(currentUser){clearTimeout(saveTimer);saveTimer=setTimeout(()=>syncState().catch(showCloudError),500);} }
 function showCloudError(error){console.error(error);showToast(`Não foi possível sincronizar: ${error.message||'verifique a conexão'}`);}
 async function replaceRows(table, rows){const del=await cloud.from(table).delete().eq('user_id',currentUser.id);if(del.error)throw del.error;for(let i=0;i<rows.length;i+=500){const part=rows.slice(i,i+500);if(part.length){const result=await cloud.from(table).insert(part);if(result.error)throw result.error;}}}
 async function syncState(){if(!currentUser)return;const uid=currentUser.id;
@@ -41,7 +43,7 @@ async function syncState(){if(!currentUser)return;const uid=currentUser.id;
   const cardRows=state.cards.map(c=>({id:cardIds.get(c.name),user_id:uid,name:c.name}));
   const cardBudgetRows=state.cards.flatMap(c=>(Array.isArray(c.monthly)?c.monthly:[]).map((amount,i)=>Number(amount)>0?{user_id:uid,card_id:cardIds.get(c.name),budget_year:today.getFullYear(),budget_month:i+1,planned_amount:Number(amount)}:null).filter(Boolean));
   await replaceRows('transactions',txRows);await replaceRows('goals',goalRows);await replaceRows('categories',categoryRows);await replaceRows('monthly_budgets',budgetRows);await replaceRows('card_monthly_budgets',cardBudgetRows);await replaceRows('cards',cardRows);
-  localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+  localStorage.setItem(accountStorageKey(),JSON.stringify(state));
 }
 async function loadCloudState(){const uid=currentUser.id;const tables=['transactions','goals','categories','monthly_budgets','cards','card_monthly_budgets'];const result=await Promise.all(tables.map(table=>cloud.from(table).select('*').eq('user_id',uid)));for(const r of result)if(r.error)throw r.error;
   const [tx,goals,cats,budgets,cards,cardBudgets]=result.map(r=>r.data);
@@ -50,12 +52,12 @@ async function loadCloudState(){const uid=currentUser.id;const tables=['transact
   state.goals=goals.map(g=>({id:g.id,name:g.name,target:Number(g.target_amount),saved:Number(g.saved_amount)}));state.categories={};cats.forEach(c=>(state.categories[c.kind]??=[]).push(c.name));
   const budgetsByKey=new Map();budgets.forEach(b=>{const key=`${b.kind}|${b.category_name}`;if(!budgetsByKey.has(key))budgetsByKey.set(key,{kind:b.kind,category:b.category_name,monthly:Array(12).fill(0)});budgetsByKey.get(key).monthly[b.budget_month-1]=Number(b.planned_amount);});state.budgets=[...budgetsByKey.values()];
   const cardById=new Map(cards.map(c=>[c.id,{name:c.name,monthly:Array(12).fill(0)}]));cardBudgets.forEach(b=>{const c=cardById.get(b.card_id);if(c)c.monthly[b.budget_month-1]=Number(b.planned_amount);});state.cards=[...cardById.values()];
-  localStorage.setItem(STORAGE_KEY,JSON.stringify(state));renderAll();
+  localStorage.setItem(accountStorageKey(),JSON.stringify(state));renderAll();
 }
 async function loadAdminStatus(){const {data,error}=await cloud.from('profiles').select('role,plan_key,subscription_status').eq('user_id',currentUser.id).single();if(error)throw error;currentProfile=data;const isAdmin=data.role==='admin';document.getElementById('admin-nav').classList.toggle('hidden',!isAdmin);document.querySelector('.bottom-nav').classList.toggle('admin-mode',isAdmin);if(isAdmin)await loadAdminUsers();}
 async function loadAdminUsers(){if(currentProfile?.role!=='admin')return;document.getElementById('admin-users').innerHTML='<p class="muted-note">Carregando contas…</p>';const {data,error}=await cloud.from('profiles').select('user_id,email,display_name,role,plan_key,subscription_status,created_at').order('created_at',{ascending:false});if(error)throw error;adminUsers=data||[];renderAdminUsers();}
 function renderAdminUsers(){const term=document.getElementById('admin-search').value.trim().toLowerCase();const users=adminUsers.filter(u=>`${u.email} ${u.display_name}`.toLowerCase().includes(term));document.getElementById('admin-total').textContent=adminUsers.length;document.getElementById('admin-active').textContent=adminUsers.filter(u=>['active','trial'].includes(u.subscription_status)).length;document.getElementById('admin-suspended').textContent=adminUsers.filter(u=>u.subscription_status==='suspended').length;const root=document.getElementById('admin-users');root.innerHTML=users.length?users.map(u=>{const locked=u.role==='admin'||u.user_id===currentUser?.id;const statuses=['active','trial','past_due','canceled','suspended'];const plans=['free','premium','owner'];const date=u.created_at?new Intl.DateTimeFormat('pt-BR',{dateStyle:'medium'}).format(new Date(u.created_at)):'—';return `<article class="admin-user-card" data-user-card="${escapeHtml(u.user_id)}"><div class="admin-user-heading"><div class="admin-user-avatar">${escapeHtml((u.display_name||u.email||'?').slice(0,1).toUpperCase())}</div><div class="admin-user-identity"><strong>${escapeHtml(u.display_name||'Sem nome')}</strong><span>${escapeHtml(u.email)}</span></div><span class="admin-role ${u.role==='admin'?'admin-role-owner':''}">${u.role==='admin'?'ADMIN':'CLIENTE'}</span></div><div class="admin-user-meta"><span>Cadastro ${date}</span><span class="admin-status status-${escapeHtml(u.subscription_status)}">${escapeHtml(u.subscription_status)}</span></div><div class="admin-controls"><label>Plano<select class="text-input" data-admin-plan ${locked?'disabled':''}>${plans.map(p=>`<option value="${p}" ${u.plan_key===p?'selected':''}>${p}</option>`).join('')}</select></label><label>Acesso<select class="text-input" data-admin-status ${locked?'disabled':''}>${statuses.map(s=>`<option value="${s}" ${u.subscription_status===s?'selected':''}>${s}</option>`).join('')}</select></label></div>${locked?'<p class="admin-lock-note">Contas de administrador são protegidas.</p>':`<button type="button" class="secondary-button admin-save" data-admin-save="${escapeHtml(u.user_id)}">Salvar alterações</button>`}</article>`;}).join(''):'<p class="muted-note">Nenhuma conta encontrada.</p>';}
-async function handleSession(session){currentUser=session?.user||null;currentProfile=null;adminUsers=[];const button=document.getElementById('account-button');button.textContent=currentUser?(currentUser.email.split('@')[0]||'Conta'):'Entrar';const dialog=document.getElementById('auth-dialog');document.getElementById('admin-nav').classList.add('hidden');document.querySelector('.bottom-nav').classList.remove('admin-mode');if(!currentUser){if(!dialog.open)dialog.showModal();return;}try{await loadCloudState();await loadAdminStatus();if(dialog.open)dialog.close();renderAll();showToast('Dados sincronizados com a nuvem.');}catch(error){showCloudError(error);}}
+async function handleSession(session){currentUser=session?.user||null;state=currentUser?readState(accountStorageKey(currentUser)):emptyState();currentProfile=null;adminUsers=[];renderAll();const button=document.getElementById('account-button');button.textContent=currentUser?(currentUser.email.split('@')[0]||'Conta'):'Entrar';const dialog=document.getElementById('auth-dialog');document.getElementById('admin-nav').classList.add('hidden');document.querySelector('.bottom-nav').classList.remove('admin-mode');if(!currentUser){if(!dialog.open)dialog.showModal();return;}try{await loadCloudState();await loadAdminStatus();if(dialog.open)dialog.close();renderAll();showToast('Dados sincronizados com a nuvem.');}catch(error){showCloudError(error);}}
 function money(value){ return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(value || 0); }
 function dateObj(value){ const [y,m,d]=String(value).split('-').map(Number); return new Date(y,m-1,d); }
 function dateLabel(value){ return new Intl.DateTimeFormat('pt-BR',{day:'2-digit',month:'short'}).format(dateObj(value)).replace('.',''); }
@@ -208,7 +210,7 @@ function fillCategories(){
   const canManageCategories=true;
   const options=[...CATEGORIES[activeKind],...extras];
   select.innerHTML=options.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('')+(canManageCategories?'<option value="__new">＋ Criar categoria</option>':'');
-  select.onchange=()=>{if(canManageCategories&&select.value==='__new'){const category=prompt('Nome da nova categoria:');if(category?.trim()){state.categories[activeKind]=[...(state.categories[activeKind]||[]),category.trim()];const wanted=category.trim();fillCategories();select.value=wanted;localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}else select.selectedIndex=0;}};
+  select.onchange=()=>{if(canManageCategories&&select.value==='__new'){const category=prompt('Nome da nova categoria:');if(category?.trim()){state.categories[activeKind]=[...(state.categories[activeKind]||[]),category.trim()];const wanted=category.trim();fillCategories();select.value=wanted;localStorage.setItem(accountStorageKey(),JSON.stringify(state));}else select.selectedIndex=0;}};
 }
 function openTransaction(kind='despesa'){
   activeKind=kind;
