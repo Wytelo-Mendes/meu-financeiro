@@ -48,3 +48,12 @@
 .report-detail-heading{margin-top:25px}
 .report-note{padding:13px;border:1px dashed var(--line);border-radius:13px}
 @media(max-width:360px){.report-overview{grid-template-columns:1fr}.report-summary-card{padding:14px}.report-summary-copy strong{font-size:16px}}
+.sheet-dialog#auth-dialog{position:fixed;inset:0;margin:auto;width:min(440px,calc(100vw - 24px));max-width:440px;max-height:calc(100dvh - 32px);overflow-y:auto;overscroll-behavior:contain;border-radius:24px;padding:20px 22px max(18px,env(safe-area-inset-bottom));box-shadow:0 20px 80px #1a2b2040;scroll-padding-block:16px}
+#auth-dialog form{min-height:0;gap:8px}
+#auth-dialog .dialog-handle{margin-bottom:7px}
+#auth-dialog .dialog-heading{margin-bottom:7px}
+#auth-dialog .backup-copy{margin:4px 0 8px}
+#auth-dialog .field-label{margin:4px 0 0}
+#auth-dialog .submit-button{margin-top:12px}
+#auth-dialog .secondary-button{margin-top:0}
+@supports not (height:100dvh){.sheet-dialog#auth-dialog{max-height:calc(100vh - 32px)}}
