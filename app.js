@@ -18,6 +18,7 @@ let activeView = 'inicio';
 let activeKind = 'despesa';
 let activeFilter = 'todos';
 let reportFilter = 'todos';
+let editingTransactionId = null, editingGoalId = null;
 let installPrompt = null;
 let toastTimer;
 
@@ -75,7 +76,7 @@ function txMarkup(t, deletable=true){
   const label=t.kind==='investimento'?`Investimento · ${t.category}`:t.category;
   const detail=[label,dateLabel(t.date),t.method,t.card,t.installment?`Parcela ${t.installment}`:'',t.note].filter(Boolean).map(escapeHtml).join(' · ');
   const status=t.kind==='investimento'?'':`<span class="status-tag ${t.paid?'is-paid':'is-pending'}">${t.paid?'Realizado':'Pendente'}</span>`;
-  return `<article class="transaction-row"><span class="transaction-icon">${escapeHtml(transactionIcon(t))}</span><div><div class="transaction-title">${escapeHtml(t.description)}</div><div class="transaction-meta">${detail}</div>${status}</div><div class="transaction-amount ${signedClass(t)}">${signedAmount(t)}${deletable&&!t.paid&&t.kind!=='investimento'?`<button class="row-pay" data-set-paid="${escapeHtml(t.id)}" aria-label="Marcar ${escapeHtml(t.description)} como realizado" title="Marcar realizado">✓</button>`:''}${deletable?`<button class="row-delete" data-delete-transaction="${escapeHtml(t.id)}" aria-label="Apagar ${escapeHtml(t.description)}" title="Apagar lançamento">×</button>`:''}</div></article>`;
+  return `<article class="transaction-row"><span class="transaction-icon">${escapeHtml(transactionIcon(t))}</span><div><div class="transaction-title">${escapeHtml(t.description)}</div><div class="transaction-meta">${detail}</div>${status}</div><div class="transaction-amount ${signedClass(t)}">${signedAmount(t)}${deletable?`<button class="row-edit" data-edit-transaction="${escapeHtml(t.id)}" aria-label="Editar ${escapeHtml(t.description)}" title="Editar lançamento">✎</button>`:''}${deletable&&!t.paid&&t.kind!=='investimento'?`<button class="row-pay" data-set-paid="${escapeHtml(t.id)}" aria-label="Marcar ${escapeHtml(t.description)} como realizado" title="Marcar realizado">✓</button>`:''}${deletable?`<button class="row-delete" data-delete-transaction="${escapeHtml(t.id)}" aria-label="Apagar ${escapeHtml(t.description)}" title="Apagar lançamento">×</button>`:''}</div></article>`;
 }
 function renderDashboard(){
   const items=monthTransactions(), realized=sums(items.filter(t=>t.paid||t.kind==='investimento')), planned=sums(items), balance=realized.income-realized.expense;
@@ -109,7 +110,7 @@ function renderGoals(){
   const root=document.getElementById('goal-list');
   root.innerHTML=state.goals.map(g=>{
     const pct=Math.min(100,Math.round((g.saved/g.target)*100));
-    return `<article class="goal-card"><div class="goal-card-top"><span class="goal-icon">◇</span><strong class="goal-name">${escapeHtml(g.name)}</strong><button class="goal-more" data-goal-add="${escapeHtml(g.id)}" aria-label="Adicionar valor à meta ${escapeHtml(g.name)}" title="Adicionar valor">＋</button><button class="goal-more delete-action" data-goal-delete="${escapeHtml(g.id)}" aria-label="Apagar meta ${escapeHtml(g.name)}" title="Apagar meta">×</button></div><div class="goal-money"><strong>${money(g.saved)} <span>de ${money(g.target)}</span></strong><span>${pct}%</span></div><div class="goal-progress"><span style="width:${pct}%"></span></div><div class="goal-foot"><span>Faltam ${money(Math.max(0,g.target-g.saved))}</span><b>${pct>=100?'Meta alcançada':'Em andamento'}</b></div></article>`;
+    return `<article class="goal-card"><div class="goal-card-top"><span class="goal-icon">◇</span><strong class="goal-name">${escapeHtml(g.name)}</strong><button class="goal-more" data-goal-add="${escapeHtml(g.id)}" aria-label="Adicionar valor à meta ${escapeHtml(g.name)}" title="Adicionar valor">＋</button><button class="goal-more" data-goal-edit="${escapeHtml(g.id)}" aria-label="Editar meta ${escapeHtml(g.name)}" title="Editar meta">✎</button><button class="goal-more delete-action" data-goal-delete="${escapeHtml(g.id)}" aria-label="Apagar meta ${escapeHtml(g.name)}" title="Apagar meta">×</button></div><div class="goal-money"><strong>${money(g.saved)} <span>de ${money(g.target)}</span></strong><span>${pct}%</span></div><div class="goal-progress"><span style="width:${pct}%"></span></div><div class="goal-foot"><span>Faltam ${money(Math.max(0,g.target-g.saved))}</span><b>${pct>=100?'Meta alcançada':'Em andamento'}</b></div></article>`;
   }).join('');
   document.getElementById('goal-empty').classList.toggle('hidden',state.goals.length>0);
 }
@@ -223,15 +224,26 @@ function fillCategories(){
   select.innerHTML=options.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('')+(canManageCategories?'<option value="__new">＋ Criar categoria</option>':'');
   select.onchange=()=>{if(canManageCategories&&select.value==='__new'){const category=prompt('Nome da nova categoria:');if(category?.trim()){state.categories[activeKind]=[...(state.categories[activeKind]||[]),category.trim()];const wanted=category.trim();fillCategories();select.value=wanted;localStorage.setItem(accountStorageKey(),JSON.stringify(state));}else select.selectedIndex=0;}};
 }
-function openTransaction(kind='despesa'){
+function openTransaction(kind='despesa',transaction=null){
+  editingTransactionId=transaction?.id||null;
   activeKind=kind;
   document.querySelectorAll('.type-option').forEach(b=>b.classList.toggle('active',b.dataset.kind===kind));
   fillCategories();
-  document.getElementById('transaction-form').reset();
-  document.getElementById('tx-date').value=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-  document.getElementById('tx-status').value='paid';
-  document.getElementById('transaction-dialog-title').textContent=kind==='investimento'?'Movimentação de investimento':'Novo lançamento';
-  document.querySelector('#transaction-form .submit-button').textContent=kind==='investimento'?'Salvar movimentação':'Salvar lançamento';
+  const form=document.getElementById('transaction-form');form.reset();
+  document.getElementById('tx-date').value=transaction?.date||`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  document.getElementById('tx-status').value=transaction?.paid===false?'pending':'paid';
+  document.getElementById('tx-description').value=transaction?.description||'';
+  document.getElementById('tx-amount').value=transaction?.amount??'';
+  const categorySelect=document.getElementById('tx-category');
+  if(transaction?.category&&![...categorySelect.options].some(option=>option.value===transaction.category))categorySelect.add(new Option(transaction.category,transaction.category));
+  document.getElementById('tx-category').value=transaction?.category||CATEGORIES[kind][0];
+  document.getElementById('tx-method').value=transaction?.method||'';
+  document.getElementById('tx-card').value=transaction?.card||'';
+  document.getElementById('tx-installment').value=transaction?.installment||'';
+  document.getElementById('tx-note').value=transaction?.note||'';
+  document.getElementById('transaction-dialog-eyebrow').textContent=editingTransactionId?'EDITAR MOVIMENTAÇÃO':'NOVA MOVIMENTAÇÃO';
+  document.getElementById('transaction-dialog-title').textContent=editingTransactionId?'Editar lançamento':kind==='investimento'?'Movimentação de investimento':'Novo lançamento';
+  document.querySelector('#transaction-form .submit-button').textContent=editingTransactionId?'Salvar alterações':kind==='investimento'?'Salvar movimentação':'Salvar lançamento';
   document.getElementById('transaction-dialog').showModal();
 }
 function addTransaction(event){
@@ -239,17 +251,31 @@ function addTransaction(event){
   const description=document.getElementById('tx-description').value.trim();
   const amount=Number(document.getElementById('tx-amount').value);
   if(!description||!Number.isFinite(amount)||amount<=0)return;
-  const category=document.getElementById('tx-category').value;
+  const category=document.getElementById('tx-category').value,previous=state.transactions.find(t=>t.id===editingTransactionId);
   const date=document.getElementById('tx-date').value,paid=activeKind==='investimento'||document.getElementById('tx-status').value==='paid';
-  state.transactions.push({id:crypto.randomUUID(),kind:activeKind,description,amount,category,date,dueDate:date,paymentDate:paid?date:null,paid,status:paid?'paid':'pending',method:document.getElementById('tx-method').value,card:document.getElementById('tx-card').value.trim(),installment:document.getElementById('tx-installment').value.trim(),note:document.getElementById('tx-note').value.trim(),createdAt:Date.now()});
+  const updated={id:previous?.id||crypto.randomUUID(),kind:activeKind,description,amount,category,date,dueDate:date,paymentDate:paid?(previous?.paid&&previous.date===date?previous.paymentDate||date:date):null,paid,status:paid?'paid':'pending',method:document.getElementById('tx-method').value,card:document.getElementById('tx-card').value.trim(),installment:document.getElementById('tx-installment').value.trim(),note:document.getElementById('tx-note').value.trim(),createdAt:previous?.createdAt||Date.now()};
+  if(previous)state.transactions=state.transactions.map(t=>t.id===editingTransactionId?updated:t);else state.transactions.push(updated);
+  const wasEditing=Boolean(previous);editingTransactionId=null;
   const txDate=dateObj(date);monthCursor=new Date(txDate.getFullYear(),txDate.getMonth(),1);
-  document.getElementById('transaction-dialog').close();saveState();showToast('Lançamento salvo.');
+  document.getElementById('transaction-dialog').close();saveState();showToast(wasEditing?'Lançamento atualizado.':'Lançamento salvo.');
+}
+function openGoal(goal=null){
+  editingGoalId=goal?.id||null;const form=document.getElementById('goal-form');form.reset();
+  document.getElementById('goal-name').value=goal?.name||'';
+  document.getElementById('goal-target').value=goal?.target??'';
+  document.getElementById('goal-saved').value=goal?.saved??0;
+  document.getElementById('goal-dialog-eyebrow').textContent=editingGoalId?'EDITAR META':'NOVO PLANO';
+  document.getElementById('goal-dialog-title').textContent=editingGoalId?'Editar meta':'Criar meta';
+  document.querySelector('#goal-form .submit-button').textContent=editingGoalId?'Salvar alterações':'Salvar meta';
+  document.getElementById('goal-dialog').showModal();
 }
 function addGoal(event){
   event.preventDefault();
   const name=document.getElementById('goal-name').value.trim(),target=Number(document.getElementById('goal-target').value),saved=Number(document.getElementById('goal-saved').value||0);
   if(!name||target<=0||saved<0)return;
-  state.goals.push({id:crypto.randomUUID(),name,target,saved});document.getElementById('goal-dialog').close();saveState();showToast('Meta criada.');
+  const previous=state.goals.find(g=>g.id===editingGoalId),updated={id:previous?.id||crypto.randomUUID(),name,target,saved};
+  if(previous)state.goals=state.goals.map(g=>g.id===editingGoalId?updated:g);else state.goals.push(updated);
+  const wasEditing=Boolean(previous);editingGoalId=null;document.getElementById('goal-dialog').close();saveState();showToast(wasEditing?'Meta atualizada.':'Meta criada.');
 }
 function exportBackup(){
   const blob=new Blob([JSON.stringify({version:1,exportedAt:new Date().toISOString(),...state},null,2)],{type:'application/json'});
@@ -268,11 +294,13 @@ document.addEventListener('click',event=>{
   const shift=event.target.closest('[data-month-shift]');if(shift){monthCursor.setMonth(monthCursor.getMonth()+Number(shift.dataset.monthShift));renderAll();return;}
   const addTx=event.target.closest('[data-add-transaction]');if(addTx){openTransaction('despesa');return;}
   const addInv=event.target.closest('[data-add-investment]');if(addInv){openTransaction('investimento');return;}
-  const addGoalButton=event.target.closest('[data-add-goal]');if(addGoalButton||event.target.closest('#add-goal')){document.getElementById('goal-form').reset();document.getElementById('goal-saved').value='0';document.getElementById('goal-dialog').showModal();return;}
+  const addGoalButton=event.target.closest('[data-add-goal]');if(addGoalButton||event.target.closest('#add-goal')){openGoal();return;}
+  const editTx=event.target.closest('[data-edit-transaction]');if(editTx){const transaction=state.transactions.find(t=>t.id===editTx.dataset.editTransaction);if(transaction)openTransaction(transaction.kind,transaction);return;}
   const filter=event.target.closest('[data-filter]');if(filter){activeFilter=filter.dataset.filter;document.querySelectorAll('.filter-pill').forEach(b=>b.classList.toggle('active',b===filter));renderTransactions();return;}
   const del=event.target.closest('[data-delete-transaction]');if(del){if(confirm('Apagar este lançamento?')){state.transactions=state.transactions.filter(t=>t.id!==del.dataset.deleteTransaction);saveState();showToast('Lançamento apagado.');}return;}
   const paid=event.target.closest('[data-set-paid]');if(paid){const tx=state.transactions.find(t=>t.id===paid.dataset.setPaid);if(tx){const d=new Date();const date=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;tx.paid=true;tx.status='paid';tx.paymentDate=date;tx.date=date;monthCursor=new Date(d.getFullYear(),d.getMonth(),1);saveState();showToast('Lançamento marcado como realizado.');}return;}
   const goalAdd=event.target.closest('[data-goal-add]');if(goalAdd){const g=state.goals.find(x=>x.id===goalAdd.dataset.goalAdd);const n=Number(prompt(`Quanto deseja adicionar à meta “${g.name}”?`,''));if(Number.isFinite(n)&&n>0){g.saved+=n;saveState();showToast('Progresso atualizado.');}return;}
+  const goalEdit=event.target.closest('[data-goal-edit]');if(goalEdit){const goal=state.goals.find(g=>g.id===goalEdit.dataset.goalEdit);if(goal)openGoal(goal);return;}
   const goalDelete=event.target.closest('[data-goal-delete]');if(goalDelete){if(confirm('Apagar esta meta?')){state.goals=state.goals.filter(g=>g.id!==goalDelete.dataset.goalDelete);saveState();showToast('Meta apagada.');}return;}
   if(event.target.closest('#backup-button')){document.getElementById('backup-dialog').showModal();return;}
   if(event.target.closest('#admin-refresh')){loadAdminUsers().catch(showCloudError);return;}
@@ -281,7 +309,7 @@ document.addEventListener('click',event=>{
   if(event.target.closest('#clear-data')){if(confirm('Apagar todos os lançamentos e metas deste aparelho? Esta ação não pode ser desfeita.')){state={transactions:[],goals:[],categories:{},budgets:[],cards:[]};saveState();document.getElementById('backup-dialog').close();showToast('Dados apagados.');}return;}
   const closer=event.target.closest('[data-close-dialog]');if(closer){closer.closest('dialog').close();}
 });
-document.querySelectorAll('.type-option').forEach(button=>button.addEventListener('click',()=>{activeKind=button.dataset.kind;document.querySelectorAll('.type-option').forEach(b=>b.classList.toggle('active',b===button));fillCategories();}));
+document.querySelectorAll('.type-option').forEach(button=>button.addEventListener('click',()=>{activeKind=button.dataset.kind;document.querySelectorAll('.type-option').forEach(b=>b.classList.toggle('active',b===button));fillCategories();if(editingTransactionId)document.getElementById('transaction-dialog-title').textContent='Editar lançamento';}));
 document.querySelectorAll('[data-filter]').forEach(button=>button.addEventListener('keydown',event=>{if(event.key==='Enter'){button.click();}}));
 document.getElementById('transaction-form').addEventListener('submit',addTransaction);
 document.getElementById('goal-form').addEventListener('submit',addGoal);

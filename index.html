@@ -138,7 +138,7 @@
 
     <dialog id="transaction-dialog" class="sheet-dialog">
       <form id="transaction-form" method="dialog">
-        <div class="dialog-handle"></div><div class="dialog-heading"><div><p class="eyebrow">NOVA MOVIMENTAÇÃO</p><h2 id="transaction-dialog-title">Novo lançamento</h2></div><button type="button" class="close-button" data-close-dialog aria-label="Fechar">×</button></div>
+        <div class="dialog-handle"></div><div class="dialog-heading"><div><p class="eyebrow" id="transaction-dialog-eyebrow">NOVA MOVIMENTAÇÃO</p><h2 id="transaction-dialog-title">Novo lançamento</h2></div><button type="button" class="close-button" data-close-dialog aria-label="Fechar">×</button></div>
         <div class="type-switch" role="group" aria-label="Tipo de movimentação"><button type="button" class="type-option active" data-kind="despesa">Saída</button><button type="button" class="type-option" data-kind="receita">Entrada</button><button type="button" class="type-option" data-kind="investimento">Investimento</button></div>
         <label class="field-label" for="tx-description">Descrição</label><input class="text-input" id="tx-description" maxlength="80" placeholder="Ex.: conta de luz" required />
         <label class="field-label" for="tx-amount">Valor</label><div class="amount-input"><span>R$</span><input id="tx-amount" inputmode="decimal" type="number" min="0.01" step="0.01" placeholder="0,00" required /></div>
@@ -151,7 +151,7 @@
     </dialog>
 
     <dialog id="goal-dialog" class="sheet-dialog">
-      <form id="goal-form" method="dialog"><div class="dialog-handle"></div><div class="dialog-heading"><div><p class="eyebrow">NOVO PLANO</p><h2>Criar meta</h2></div><button type="button" class="close-button" data-close-dialog aria-label="Fechar">×</button></div>
+      <form id="goal-form" method="dialog"><div class="dialog-handle"></div><div class="dialog-heading"><div><p class="eyebrow" id="goal-dialog-eyebrow">NOVO PLANO</p><h2 id="goal-dialog-title">Criar meta</h2></div><button type="button" class="close-button" data-close-dialog aria-label="Fechar">×</button></div>
         <label class="field-label" for="goal-name">Nome da meta</label><input class="text-input" id="goal-name" maxlength="50" placeholder="Ex.: viagem, reserva" required />
         <label class="field-label" for="goal-target">Quanto você quer juntar?</label><div class="amount-input"><span>R$</span><input id="goal-target" inputmode="decimal" type="number" min="0.01" step="0.01" placeholder="0,00" required /></div>
         <label class="field-label" for="goal-saved">Quanto já guardou?</label><div class="amount-input"><span>R$</span><input id="goal-saved" inputmode="decimal" type="number" min="0" step="0.01" value="0" /></div>
